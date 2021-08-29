@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const todoItem_1 = require("./todoItem");
-const todoCollection_1 = require("./todoCollection");
 const inquirer = require("inquirer");
+const jsonTodoCollection_1 = require("./jsonTodoCollection");
 let todos = [
     new todoItem_1.TodoItem(1, "Call Musa"),
     new todoItem_1.TodoItem(2, "Pay fee", true),
@@ -10,7 +10,8 @@ let todos = [
     new todoItem_1.TodoItem(4, "Quran recite", true),
     new todoItem_1.TodoItem(5, "Attend meeting"),
 ];
-let collection = new todoCollection_1.TodoCollection("Musa", todos);
+//let collection = new TodoCollection("Musa", todos);
+let collection = new jsonTodoCollection_1.JsonTodoCollection("Musa", todos);
 let showCompleted = true;
 function displayTodoList() {
     console.log(`${collection.userName}'s Todo List ` +
@@ -20,9 +21,44 @@ function displayTodoList() {
 }
 var Commands;
 (function (Commands) {
+    Commands["Add"] = "Add New Task";
+    Commands["Complete"] = "Complete Task";
     Commands["Toggle"] = "Show/Hide Completed";
+    Commands["Purge"] = "Remove Completed Tasks";
     Commands["Quit"] = "Quit";
 })(Commands || (Commands = {}));
+function promptAdd() {
+    console.clear();
+    inquirer
+        .prompt({ type: "input", name: "add", message: "Enter task:" })
+        .then((answers) => {
+        if (answers["add"] !== "") {
+            collection.addTodo(answers["add"]);
+        }
+        promptUser();
+    });
+}
+function promptComplete() {
+    console.clear();
+    inquirer
+        .prompt({
+        type: "checkbox",
+        name: "complete",
+        message: "Mark Tasks Complete",
+        choices: collection.getTodoItems(showCompleted).map((item) => ({
+            name: item.task,
+            value: item.id,
+            checked: item.complete,
+        })),
+    })
+        .then((answers) => {
+        let completedTasks = answers["complete"];
+        collection
+            .getTodoItems(true)
+            .forEach((item) => collection.markComplete(item.id, completedTasks.find((id) => id === item.id) != undefined));
+        promptUser();
+    });
+}
 function promptUser() {
     console.clear();
     displayTodoList();
@@ -38,6 +74,21 @@ function promptUser() {
         switch (answers["command"]) {
             case Commands.Toggle:
                 showCompleted = !showCompleted;
+                promptUser();
+                break;
+            case Commands.Add:
+                promptAdd();
+                break;
+            case Commands.Complete:
+                if (collection.getItemCounts().incomplete > 0) {
+                    promptComplete();
+                }
+                else {
+                    promptUser();
+                }
+                break;
+            case Commands.Purge:
+                collection.removeComplete();
                 promptUser();
                 break;
         }

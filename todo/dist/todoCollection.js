@@ -6,6 +6,7 @@ class TodoCollection {
     constructor(userName, todoItems = []) {
         this.userName = userName;
         this.nextId = 1;
+        //private itemMap = new Map<number, TodoItem>();
         this.itemMap = new Map();
         todoItems.forEach((item) => this.itemMap.set(item.id, item));
     }
